@@ -56,7 +56,7 @@ describe Refinery::WordPress::Page, :type => :model do
     end
 
     it "adds paragraphs to the sample text" do
-       expect(@result).to include_an_html_tag(:p)
+       expect(@result).to have_tag(:p)
     end
   end
 
@@ -76,7 +76,9 @@ describe Refinery::WordPress::Page, :type => :model do
     end
 
     it 'removes style attributes from the text' do
-      expect(@result).to include_an_html_tag(:span).without_html_attributes([:style])
+      expect(@result).to have_tag(:span)
+      expect(@result).to_not have_tag('span[style]')
+      expect(@result).to match(/<span\s*>/)
     end
   end
   describe "#format_shortcodes" do
@@ -91,9 +93,9 @@ describe Refinery::WordPress::Page, :type => :model do
       before do
         @result = page.send(:format_shortcodes, sample_text)
       end
-
+      puts @result
       it 'returns <pre/> markup' do
-        expect(@result).to include_an_html_tag(:pre).with_html_attributes(:class=>'brush: ruby')
+        expect(@result).to match(/<pre class='(.+?)'>.+?<\/pre>/).with_captures("brush: ruby")
       end
     end #rewrite ruby shortcode
 
@@ -111,14 +113,17 @@ describe Refinery::WordPress::Page, :type => :model do
       end
 
       it '#returns <figure/> markup' do
-        expect(@result).to include_an_html_tag(:figure) do fig
-          expect(fig).to include_an_html_tag(:img)
-          expect(fig).to include_an_html_tag(:figcaption)
+        expect(@result).to have_tag(:figure) do |fig|
+          expect(fig).to have_tag(:img)
+          expect(fig).to have_tag(:figcaption)
         end #fig
       end
 
       it "strips out image width and height attributes" do
-        expect(@result).to include_an_html_tag(:img).without_html_attributes([:width, :height, :style])
+        expect(@result).to have_tag(:img)
+        expect(@result).to_not have_tag('img[width]')
+        expect(@result).to_not have_tag('img[height]')
+        expect(@result).to_not have_tag('img[style]')
       end
     end #rewrite caption shortcode
 
@@ -134,12 +139,12 @@ describe Refinery::WordPress::Page, :type => :model do
       end
 
       it 'returns iframe markup' do
-        expect(@result).to include_an_html_tag(:p) do para
-          expect(para).to include_an_html_tag(:iframe)
-            .with_html_attributes(
-              :width => '100',
-              :height=> '200',
-              :src=>'http://www.youtube.com/embed/abcde?version=3&rel=1&fs=1&showsearch=0&showinfo=1&iv_load_policy=1&wmode=transparent')
+        expect(@result).to have_tag(:p) do |para|
+          expect(para).to have_tag(:iframe, with: {
+            width: '100',
+            height: '200',
+            src: 'http://www.youtube.com/embed/abcde?version=3&rel=1&fs=1&showsearch=0&showinfo=1&iv_load_policy=1&wmode=transparent'
+          })
         end #para
       end #it returns iframe markup
     end #rewrite youtube shortcode
@@ -168,8 +173,8 @@ describe Refinery::WordPress::Page, :type => :model do
     end
 
     it 'creates files containing the decoded image' do
-      expect(File.exist?("#{Rails.public_path}/post1000-0.png")).to be_true
-      expect(File.exist?("#{Rails.public_path}/post1000-1.png")).to be_true
+      expect(File.exist?("#{Rails.public_path}/post1000-0.png")).to be(true)
+      expect(File.exist?("#{Rails.public_path}/post1000-1.png")).to be(true)
     end
 
     after do

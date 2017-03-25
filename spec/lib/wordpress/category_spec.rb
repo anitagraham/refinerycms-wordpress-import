@@ -17,7 +17,7 @@ describe Refinery::WordPress::Category, :type => :model do
     end
 
     it "creates a BlogCategory" do
-      expect(Refinery::Blog::Category).to have(1).record
+      expect(Refinery::Blog::Category.count).to eq(1)
     end
 
     it "gives the BlogCategory object the correct name" do

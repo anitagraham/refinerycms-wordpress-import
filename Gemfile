@@ -1,16 +1,19 @@
 source "http://rubygems.org"
 
+ruby '2.3.1'
+
+# Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
+gem 'rails', '~>4.2'
+
 gemspec
 
-gem 'refinerycms', '~> 2.1.0'
-gem 'refinerycms-blog', '~> 2.1.0'
-gem 'refinerycms-authentication', '~> 2.1.0'
+gem 'refinerycms', git: 'https://github.com/refinery/refinerycms', branch:'3-0-stable'
+gem 'refinerycms-blog', git: 'https://github.com/refinery/refinerycms-blog'
+gem 'refinerycms-authentication-devise', '~> 1.0.4'
 gem 'acts-as-taggable-on'
 gem 'globalize'
 
 gem 'shortcode', '0.1.2'
-
-gem 'sqlite3'
 
 group :development, :test do
   gem 'factory_girl_rails'
@@ -21,29 +24,16 @@ group :development, :test do
   gem 'guard-bundler'
   gem 'fakeweb'
   gem 'libnotify' if  RUBY_PLATFORM =~ /linux/i
+  gem 'byebug'
+end
 
-  require 'rbconfig'
+group :test do
+  gem 'sqlite3'
+  gem 'rspec-html-matchers'
+end
 
-  platforms :mswin, :mingw do
-    gem 'win32console'
-    gem 'rb-fchange', '~> 0.0.5'
-    gem 'rb-notifu', '~> 0.0.4'
-  end
-
-  platforms :ruby do
-    gem 'spork'
-    gem 'guard-spork'
-
-    unless ENV['TRAVIS']
-      if RbConfig::CONFIG['target_os'] =~ /darwin/i
-        gem 'rb-fsevent', '>= 0.3.9'
-        gem 'growl',      '~> 1.0.3'
-      end
-      if RbConfig::CONFIG['target_os'] =~ /linux/i
-        gem 'rb-inotify', '>= 0.5.1'
-        gem 'libnotify',  '~> 0.1.3'
-      end
-    end
-  end
+# Load local gems according to Refinery developer preference.
+if File.exist? local_gemfile = File.expand_path('../.gemfile', __FILE__)
+  eval File.read(local_gemfile)
 end
 

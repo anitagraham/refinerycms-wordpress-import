@@ -12,7 +12,7 @@ def setup_environment
   #ActionMailer::Base.perform_deliveries = true
   #ActionMailer::Base.default_url_options[:host] = "test.com"
 
-  require "custom_matchers.rb"
+  # require "custom_matchers.rb"
 
   Rails.backtrace_cleaner.remove_silencers!
 
@@ -23,10 +23,11 @@ def setup_environment
     # Remove this line if you don't want RSpec's should and should_not
     # methods or matchers
     require 'rspec/expectations'
+    include RSpecHtmlMatchers
+
     config.include RSpec::Matchers
 
     config.mock_with :rspec
-    config.treat_symbols_as_metadata_keys_with_true_values = true
     config.filter_run :focus => true
     config.run_all_when_everything_filtered = true
     config.include FactoryGirl::Syntax::Methods

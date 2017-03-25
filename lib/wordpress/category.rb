@@ -12,8 +12,14 @@ module Refinery
       end
 
       def to_refinery
-        Refinery::Blog::Category.find_or_create_by_title(name)
+        cat = Refinery::Blog::Category.by_title(name)
+        if cat.nil?
+          cat = Refinery::Blog::Category.new(title: name)
+          cat.save!
+        end
+        cat
       end
     end
   end
 end
+

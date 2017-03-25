@@ -91,8 +91,7 @@ module Refinery
           :title => title,
           :created_at => post_date,
           :draft => draft?
-         },
-         :without_protection => true)
+         })
 
         page.parts.create(:title => 'Body', :body => content_formatted)
         page

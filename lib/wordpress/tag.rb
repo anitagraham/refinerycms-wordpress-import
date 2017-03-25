@@ -12,7 +12,7 @@ module Refinery
       end
 
       def to_refinery
-        ::ActsAsTaggableOn::Tag.find_or_create_by_name(name)
+        ::ActsAsTaggableOn::Tag.find_or_create_by(name: name)
       end
 
     end

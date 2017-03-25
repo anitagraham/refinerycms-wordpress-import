@@ -12,11 +12,11 @@ describe Refinery::WordPress::Author, :type => :model do
     end
 
     it "creates a User object" do
-      expect(Refinery::User.count).to eq(1)
+      expect(Refinery::Authentication::Devise::User.count).to eq(1)
     end
 
     it 'returns a Refinery user' do
-      expect(@user).to be_a(Refinery::User)
+      expect(@user).to be_a(Refinery::Authentication::Devise::User)
     end
 
     it 'assigns the role "Refinery" to the user' do

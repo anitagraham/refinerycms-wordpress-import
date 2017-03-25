@@ -1,29 +1,36 @@
 require 'spec_helper'
 
 describe Refinery::WordPress::Tag, :type => :model do
-  let(:tag) { Refinery::WordPress::Tag.new('ruby') }
+
+  let(:wp_tag) { Refinery::WordPress::Tag.new('ruby') }
+  let(:refinery_tag) {wp_tag.to_refinery}
+  let(:converting_a_tag){ ->(tag){tag.to_refinery} }
 
   describe "#name" do
-    specify { tag.name.should == 'ruby' }
+    it "initializes a tag with the specified name" do
+      expect(wp_tag.name).to eq('ruby' )
+    end
   end
 
   describe "#==" do
-    specify { tag.should == Refinery::WordPress::Tag.new('ruby') }
-    specify { tag.should_not == Refinery::WordPress::Tag.new('php') }
+    it 'is equivalent to a tag with the same name' do
+      expect(wp_tag).to eq(Refinery::WordPress::Tag.new('ruby'))
+    end
+    it 'is not equivalent a tag with a different name' do
+      expect(wp_tag).not_to eq(Refinery::WordPress::Tag.new('php'))
+    end
   end
 
   describe "#to_refinery" do
-    before do 
-      @tag = tag.to_refinery
+
+    it "creates a Refinery::Tag with the same name as the WP tag" do
+      expect(wp_tag.name).to eq(refinery_tag.name)
     end
 
-    it "should create a ActsAsTaggableOn::Tag" do
-      ::ActsAsTaggableOn::Tag.should have(1).record
+    it "creates an ActsAsTaggableOn::Tag" do
+      expect{converting_a_tag[wp_tag]}.to change(ActsAsTaggableOn::Tag, :count).by(1)
     end
-    
-    it "should copy the name over to the Tag object" do
-      @tag.name.should == tag.name
-    end
+
   end
 
 end

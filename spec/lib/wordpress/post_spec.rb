@@ -1,68 +1,72 @@
 require 'spec_helper'
 
-describe Refinery::WordPress::Post, :type => :model do
+describe Refinery::WordPress::Post, type:  :model do
 
   let(:dump) { test_dump }
-  let(:post) { dump.posts.last }
+  let(:wp_post) { dump.posts.last }
+  let(:convert_post) {
+    ->(post, allow_duplicates=false, verbose=true) { post.to_refinery(allow_duplicates, verbose)}
+  }
 
-  it 'reads a post from the XML dump file' do
-    expect( post.title).to eq('Third blog post')
-    expect( post.content).to include('Lorem ipsum dolor sit')
-    expect( post.content_formatted).to include('Lorem ipsum dolor sit')
-    expect( post.creator).to eq('admin')
-    expect( post.post_date).to eq(DateTime.new(2011, 5, 21, 12, 24, 45))
-    expect( post.post_id).to eq(6)
-    expect( post.parent_id).to eq(nil)
-    expect( post.status).to eq('publish')
+  it 'imports a post from the XML dump file' do
+    expect( wp_post.title).to eq('Third blog post')
+    expect( wp_post.content).to include('Lorem ipsum dolor sit')
+    expect( wp_post.content_formatted).to start_with('<p>').and end_with('</p>')
+    expect( wp_post.content_formatted).to include('Lorem ipsum dolor sit')
+    expect( wp_post.creator).to eq('admin')
+    expect( wp_post.post_date).to eq(DateTime.new(2011, 5, 21, 12, 24, 45))
+    expect( wp_post.post_id).to eq(6)
+    expect( wp_post.parent_id).to eq(nil)
+    expect( wp_post.status).to eq('publish')
 #     Refinery doesn't use meta_keywords
-    # expect( post.meta_keywords).to eq('key1, key2, key3')
-    expect( post.meta_description).to eq('meta description')
+    # expect( wp_post.meta_keywords).to eq('key1, key2, key3')
+    expect( wp_post.meta_description).to eq('meta description')
 
-    expect(post).to eq(test_dump.posts.last)
-    expect(post).not_to eq(test_dump.posts.first)
+    expect(wp_post).to eq(test_dump.posts.last)
+    expect(wp_post).not_to eq(test_dump.posts.first)
 
-    expect(post.categories).to have(1).category
-    expect(post.categories.first).to eq(Refinery::WordPress::Category.new('Rant'))
+    expect(wp_post.categories.count).to eq(1)
+    expect(wp_post.categories.first).to eq(Refinery::WordPress::Category.new('Rant'))
 
-    expect(post.tags).to have(3).tags
-    expect(post.tags).to include(Refinery::WordPress::Tag.new('css'))
-    expect(post.tags).to include(Refinery::WordPress::Tag.new('html'))
-    expect(post.tags).to include(Refinery::WordPress::Tag.new('php'))
-    expect(post.tag_list).to eq('css,html,php')
+    expect(wp_post.tags.count).to eq(3)
+    expect(wp_post.tags).to include(Refinery::WordPress::Tag.new('css'),
+                                 Refinery::WordPress::Tag.new('html'),
+                                 Refinery::WordPress::Tag.new('php'))
+    expect(wp_post.tag_list).to eq('css,html,php')
   end
 
   describe "#comments" do
-    it "should return all attached comments" do
-      post.comments.should have(2).comments
+    it "returns all attached comments" do
+      expect(wp_post.comments.count).to eq(2)
     end
 
     context "the last comment" do
-      let(:comment) { post.comments.last }
+      let(:wp_comment) { wp_post.comments.last }
 
       it "returns the comment's attributes" do
-        expect( post.comments.last.author).to eq('admin')
-        expect( comment.email).to             eq('admin@example.com')
-        expect( comment.url).to               eq('http://www.example.com/')
-        expect( comment.date).to              eq(DateTime.new(2011, 5, 21, 12, 26, 30))
-        expect( comment.content).to           include('Another one!')
-        expect( comment).to                   be_approved()
+        expect( wp_post.comments.last.author).to eq('admin')
+        expect( wp_comment.email).to             eq('admin@example.com')
+        expect( wp_comment.url).to               eq('http://www.example.com/')
+        expect( wp_comment.date).to              eq(DateTime.new(2011, 5, 21, 12, 26, 30))
+        expect( wp_comment.content).to           include('Another one!')
+        expect( wp_comment).to                   be_approved()
       end
 
       describe "#to_refinery" do
-        let(:ref_comment) {comment.to_refinery}
+        let(:refinery_comment) {wp_comment.to_refinery}
 
-        it "should initialize a Refinery::Blog::Comment (not save it)" do
-          Refinery::Blog::Comment.should have(0).records
-          ref_comment.should be_new_record
+        it "initializes a Refinery::Blog::Comment (not save it)" do
+          expect(Refinery::Blog::Comment.count).to eq(0)
+          expect(refinery_comment).to be_new_record
         end
 
-        it "should copy the attributes from Refinery::WordPress::Comment" do
-          expect(ref_comment.name).to eq(comment.author)
-          expect(ref_comment.email).to eq(comment.email)
-          expect(ref_comment.body).to eq(comment.content)
-          expect(ref_comment.state).to eq('approved')
-          expect(ref_comment.created_at).to eq(comment.date)
-          expect(ref_comment.created_at).to eq(comment.date)
+        it "copies the attributes from Refinery::WordPress::Comment" do
+          expect(refinery_comment.name).to eq(wp_comment.author)
+          expect(refinery_comment.email).to eq(wp_comment.email)
+          expect(refinery_comment.body).to eq(wp_comment.content)
+          expect(refinery_comment.state).to eq('approved')
+          expect(refinery_comment.created_at).to eq(wp_comment.date)
+          expect(refinery_comment.created_at).to eq(wp_comment.date)
         end
       end
     end
@@ -70,72 +74,72 @@ describe Refinery::WordPress::Post, :type => :model do
 
   describe "#to_refinery" do
     before do
-      @user = Refinery::User.create! :username => 'admin', :email => 'admin@example.com',
-        :password => 'password', :password_confirmation => 'password'
+      @user = Refinery::Authentication::Devise::User.create! username:  'admin', email:  'admin@example.com',
+        password:  'password', password_confirmation:  'password'
     end
 
-    context "with a unique title" do
-      before do
-        @ref_post = post.to_refinery
+
+    describe "with new title" do
+      let(:refinery_post){convert_post[wp_post] }
+
+      it 'adds a Refinery::Blog post' do
+        expect{convert_post[wp_post]}.to change(Refinery::Blog::Post, :count).by(1)
       end
 
       it 'saves a refinery post with all attributes' do
-        expect(Refinery::Blog::Post.count).to eq(1)
 
-        expect(@ref_post.title).to             eq(post.title)
-        expect(@ref_post.body).to              eq(post.content_formatted)
-        expect(@ref_post.draft).to             eq(post.draft?)
-        expect(@ref_post.published_at).to      eq(post.post_date)
-        expect(@ref_post.author.username).to   eq(post.creator)
-        # expect(@ref_post.meta_keywords).to     eq(post.meta_keywords)
-        expect(@ref_post.meta_description).to  eq(post.meta_description)
+        expect(refinery_post).to have_attributes(
+           title: wp_post.title,
+          body: wp_post.content_formatted,
+          draft: wp_post.draft?,
+          published_at: wp_post.post_date,
+          meta_description: wp_post.meta_description)
       end
 
       it "assigns a category for each Refinery::WordPress::Category assigned to this post" do
-        expect(@ref_post.categories.count).to eq(post.categories.count)
+        expect(refinery_post.categories.count).to eq(wp_post.categories.count)
       end
 
       it "creates a comment for each Refinery::WordPress::Comment attached to this post" do
-        expect(@ref_post.comments.count).to eq(post.comments.count)
+        expect(refinery_post.comments.count).to eq(wp_post.comments.count)
       end
     end
 
-    context "with a duplicate title" do
+    describe "with a duplicate title" do
       before do
         # create a post with the same title as ours
-        Refinery::Blog::Post.create! :title => post.title, :body => 'Lorem', :author => @user, :published_at => Time.now
+        Refinery::Blog::Post.create! title: wp_post.title, body: 'Lorem', author:  @user, published_at:  Time.now
       end
 
-      context '(duplicate titles allowed)' do
-        before do
-          @ref_post = post.to_refinery(true)
-        end
+      context 'when duplicate titles are not allowed' do
 
-        it 'saves a record' do
-          expect(Refinery::Blog::Post.count).to eq(2)
+        it 'raises an error' do
+          expect{convert_post[wp_post, false]}.to raise_error("Duplicate title #{wp_post.title}. Post not imported.")
+        end
+      end
+
+      context 'when duplicate titles are allowed' do
+        let(:refinery_post){convert_post[wp_post,  true] }
+
+        it 'saves a post' do
+          expect{convert_post[wp_post, true]}.to change(Refinery::Blog::Post, :count).by(1)
         end
 
         it "appends a counter to the original title" do
-          expect(@ref_post.title).to match(/#{Regexp.quote(post.title)}-\d/)
+          expect(refinery_post.title).to match(/#{Regexp.quote(wp_post.title)}-\d/)
         end
-#{Regexp.quote(foo)}
-        describe 'it saves the post with all attributes and associations' do
-          it "assigns a category for each Refinery::WordPress::Category assigned to this post" do
-            expect(@ref_post.categories.count).to eq(post.categories.count)
+
+        describe 'saves the post with all attributes and associations' do
+          it "the Refinery::Post has the same number of categories as the WP post" do
+            expect(refinery_post.categories.count).to eq(wp_post.categories.count)
           end
 
-          it "creates a comment for each Refinery::WordPress::Comment attached to this post" do
-            expect(@ref_post.comments.count).to eq(post.comments.count)
+          it "the Refinery::Post has the same number of comments as the WP post" do
+            expect(refinery_post.comments.count).to eq(wp_post.comments.count)
           end
         end
       end
 
-      context '(duplicate titles not allowed)' do
-
-        it 'raises an error' do
-          expect{post.to_refinery(false, true)}.to raise_error("Duplicate title #{post.title}. Post not imported.")
-        end
-      end
     end
   end
 end
