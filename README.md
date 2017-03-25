@@ -1,5 +1,7 @@
 # Refinerycms-wordpress-import
 
+Now compatible with Refinery 3.0 
+
 This project imports WordPress XML dumps into refinerycms-blog.
 
 The original repository is [mremolt/refinerycms-wordpress-import](https://github.com/mremolt/refinerycms-wordpress-import)
