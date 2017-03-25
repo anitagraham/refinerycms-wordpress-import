@@ -1,7 +1,5 @@
 source "http://rubygems.org"
 
-ruby '2.3.1'
-
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~>4.2'
 
@@ -24,7 +22,6 @@ group :development, :test do
   gem 'guard-bundler'
   gem 'fakeweb'
   gem 'libnotify' if  RUBY_PLATFORM =~ /linux/i
-  gem 'byebug'
 end
 
 group :test do
