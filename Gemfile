@@ -10,6 +10,7 @@ gem 'refinerycms-blog', git: 'https://github.com/refinery/refinerycms-blog'
 gem 'refinerycms-authentication-devise', '~> 1.0.4'
 gem 'acts-as-taggable-on'
 gem 'globalize'
+gem 'pg'
 
 gem 'shortcode', '0.1.2'
 
