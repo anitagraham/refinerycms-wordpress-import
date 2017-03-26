@@ -12,7 +12,7 @@ before_script:
   - export RETRY_COUNT=3
   - bin/rake refinery:testing:dummy_app
 script:
-  - bin/rspec $EXTENSION/spec
+  - bin/rake
 env:
   - DB=postgresql
 notifications:
